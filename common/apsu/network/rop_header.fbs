@@ -1,0 +1,13 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+namespace apsu.network.fbs;
+
+enum ReceiverOperationType:uint32 { rop_unknown = 0, rop_parms = 1, rop_oprf = 2, rop_query = 3 ,rop_response = 4}
+
+table ReceiverOperationHeader {
+    version:uint32;
+    type:ReceiverOperationType = rop_unknown;
+}
+
+root_type ReceiverOperationHeader;

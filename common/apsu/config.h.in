@@ -1,0 +1,14 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+#pragma once
+
+#define APSU_VERSION "@APSU_VERSION@"
+#define APSU_VERSION_MAJOR @APSU_VERSION_MAJOR@
+#define APSU_VERSION_MINOR @APSU_VERSION_MINOR@
+#define APSU_VERSION_PATCH @APSU_VERSION_PATCH@
+
+#cmakedefine APSU_DEBUG
+#cmakedefine APSU_USE_CXX17
+#cmakedefine APSU_USE_LOG4CPLUS
+#cmakedefine APSU_USE_ZMQ

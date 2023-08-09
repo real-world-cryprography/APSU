@@ -1,0 +1,39 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+include "ciphertext.fbs";
+
+namespace apsu.network.fbs;
+
+table ParmsRequest {
+}
+
+table OPRFRequest {
+    data:[ubyte] (required);
+}
+
+table QueryRequestPart {
+    exponent:uint32;
+    cts:[Ciphertext] (required);
+}
+
+table QueryRequest {
+    compression_type:ubyte;
+    relin_keys:[ubyte];
+    query:[QueryRequestPart] (required);
+}
+
+table plainResponse{
+    bundle_idx: uint32;
+    psu_result: [uint64] (required);
+    cache_idx:uint32;
+   
+}
+
+union Request { ParmsRequest, OPRFRequest, QueryRequest, plainResponse }
+
+table ReceiverOperation {
+    request:Request (required);
+}
+
+root_type ReceiverOperation;
