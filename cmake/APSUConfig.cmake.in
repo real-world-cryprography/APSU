@@ -1,0 +1,87 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+
+# Exports target APSU::apsu
+#
+# Creates variables:
+#   APSU_FOUND : If APSU was found
+#   APSU_VERSION : the full version number
+#   APSU_VERSION_MAJOR : the major version number
+#   APSU_VERSION_MINOR : the minor version number
+#   APSU_VERSION_PATCH : the patch version number
+#   APSU_BUILD_TYPE : The build type (e.g., "Release" or "Debug")
+#   APSU_DEBUG : Set to non-zero value if library is compiled with extra debugging code (very slow!)
+#   APSU_USE_CXX17 : Set to non-zero value if library is compiled as C++17 instead of C++14
+#   APSU_USE_LOG4CPLUS : Set to non-zero value if library is compiled with log4cplus for logging
+#   APSU_USE_ZMQ : Set to non-zero value if library is compiled with ZeroMQ and cppzmq for networking
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+macro(apsu_find_dependency dep)
+    find_dependency(${dep})
+    if(NOT ${dep}_FOUND)
+        if(NOT APSU_FIND_QUIETLY)
+            message(WARNING "Could not find dependency `${dep}` required by this configuration")
+        endif()
+        set(APSU_FOUND FALSE)
+        return()
+    endif()
+endmacro()
+
+set(APSU_FOUND FALSE)
+
+set(APSU_VERSION @APSU_VERSION@)
+set(APSU_VERSION_MAJOR @APSU_VERSION_MAJOR@)
+set(APSU_VERSION_MINOR @APSU_VERSION_MINOR@)
+set(APSU_VERSION_PATCH @APSU_VERSION_PATCH@)
+
+set(APSU_BUILD_TYPE @CMAKE_BUILD_TYPE@)
+set(APSU_DEBUG @APSU_DEBUG@)
+set(APSU_USE_CXX17 @APSU_USE_CXX17@)
+
+apsu_find_dependency(SEAL 3.7 REQUIRED)
+apsu_find_dependency(Kuku 2.1 REQUIRED)
+apsu_find_dependency(Flatbuffers REQUIRED)
+apsu_find_dependency(jsoncpp REQUIRED)
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+apsu_find_dependency(Threads REQUIRED)
+
+set(APSU_USE_LOG4CPLUS @APSU_USE_LOG4CPLUS@)
+if(APSU_USE_LOG4CPLUS)
+    apsu_find_dependency(log4cplus REQUIRED)
+endif()
+
+set(APSU_USE_ZMQ @APSU_USE_ZMQ@)
+if(APSU_USE_ZMQ)
+    apsu_find_dependency(ZeroMQ REQUIRED)
+    apsu_find_dependency(cppzmq REQUIRED)
+endif()
+
+# Add the current directory to the module search path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+
+include(${CMAKE_CURRENT_LIST_DIR}/APSUTargets.cmake)
+
+if(TARGET APSU::apsu)
+    set(APSU_FOUND TRUE)
+endif()
+
+if(APSU_FOUND)
+    if(NOT APSU_FIND_QUIETLY)
+        message(STATUS "APSU -> Version ${APSU_VERSION} detected")
+    endif()
+    if(APSU_DEBUG AND NOT APSU_FIND_QUIETLY)
+        message(STATUS "Performance warning: APSU compiled in debug mode")
+    endif()
+    if(NOT APSU_FIND_QUIETLY)
+        message(STATUS "APSU -> Targets available: APSU::apsu")
+    endif()
+else()
+    if(NOT APSU_FIND_QUIETLY)
+        message(STATUS "APSU -> NOT FOUND")
+    endif()
+endif()

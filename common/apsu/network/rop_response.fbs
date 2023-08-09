@@ -1,0 +1,25 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+namespace apsu.network.fbs;
+
+table ParmsResponse {
+    data:[ubyte];
+}
+
+table OPRFResponse {
+    data:[ubyte] (required);
+}
+
+table QueryResponse {
+    package_count:uint32;
+    alpha_max_cache_count:uint32;
+}
+
+union Response { ParmsResponse, OPRFResponse, QueryResponse }
+
+table ReceiverOperationResponse {
+    response:Response (required);
+}
+
+root_type ReceiverOperationResponse;
