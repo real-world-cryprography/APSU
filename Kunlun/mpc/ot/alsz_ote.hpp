@@ -10,13 +10,13 @@
  * https://eprint.iacr.org/2013/552.pdf
 */
 
-const static size_t BASE_LEN = 128; // the default length of base OT
+const inline size_t BASE_LEN = 128; // the default length of base OT
 
 namespace ALSZOTE{
 
 
 // check if the parameters are legal
-void CheckParameters(size_t ROW_NUM, size_t COLUMN_NUM)
+inline void CheckParameters(size_t ROW_NUM, size_t COLUMN_NUM)
 {
     if (ROW_NUM%128 != 0 || COLUMN_NUM%128 != 0){
         std::cerr << "row or column parameters is wrong" << std::endl;
@@ -31,7 +31,7 @@ struct PP
     size_t BASE_LEN = 128; // the default length of base OT  
 };
 
-void PrintPP(const PP &pp)
+inline void PrintPP(const PP &pp)
 {
     std::cout << "malicious = " << int(pp.malicious) << std::endl; 
     NPOT::PrintPP(pp.baseOT);
@@ -39,7 +39,7 @@ void PrintPP(const PP &pp)
 
 
 // serialize pp to stream
-std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
+inline std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
 {
 	fout << pp.baseOT; 
     fout << pp.malicious; 
@@ -49,7 +49,7 @@ std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
 
 
 // deserialize pp from stream
-std::ifstream &operator>>(std::ifstream &fin, PP &pp)
+inline std::ifstream &operator>>(std::ifstream &fin, PP &pp)
 {
 	fin >> pp.baseOT; 
     fin >> pp.malicious; 
@@ -58,7 +58,7 @@ std::ifstream &operator>>(std::ifstream &fin, PP &pp)
 }
 
 // the default value is 128
-PP Setup(size_t BASE_LEN)
+inline PP Setup(size_t BASE_LEN)
 {
     PP pp; 
     pp.malicious = 0; 
@@ -67,7 +67,7 @@ PP Setup(size_t BASE_LEN)
 }
 
 // save pp to file
-void SavePP(PP &pp, std::string pp_filename)
+inline void SavePP(PP &pp, std::string pp_filename)
 {
 	std::ofstream fout; 
     fout.open(pp_filename, std::ios::binary); 
@@ -82,7 +82,7 @@ void SavePP(PP &pp, std::string pp_filename)
 
 
 // fetch pp from file
-void FetchPP(PP &pp, std::string pp_filename)
+inline void FetchPP(PP &pp, std::string pp_filename)
 {
 	std::ifstream fin; 
     fin.open(pp_filename, std::ios::binary); 
@@ -96,7 +96,7 @@ void FetchPP(PP &pp, std::string pp_filename)
 }
 
 // implement random OT send
-void RandomSend(NetIO &io, PP &pp, std::vector<block> &vec_K0, std::vector<block> &vec_K1, size_t EXTEND_LEN)
+inline void RandomSend(NetIO &io, PP &pp, std::vector<block> &vec_K0, std::vector<block> &vec_K1, size_t EXTEND_LEN)
 {
     /* 
     ** Phase 1: sender obtains a random blended matrix Q of matrix T and U from receiver
@@ -183,7 +183,7 @@ void RandomSend(NetIO &io, PP &pp, std::vector<block> &vec_K0, std::vector<block
 
 // implement random receive: note this random ot is slightly different from Beaver's ROT
 // cause receiver can choose selection bit itself
-void RandomReceive(NetIO &io, PP &pp, std::vector<block> &vec_K, 
+inline void RandomReceive(NetIO &io, PP &pp, std::vector<block> &vec_K, 
                     std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
 {
     // prepare a random matrix
@@ -260,7 +260,7 @@ void RandomReceive(NetIO &io, PP &pp, std::vector<block> &vec_K,
     } 
 }
 
-void Send(NetIO &io, PP &pp, std::vector<block> &vec_m0, std::vector<block> &vec_m1, size_t EXTEND_LEN) 
+inline void Send(NetIO &io, PP &pp, std::vector<block> &vec_m0, std::vector<block> &vec_m1, size_t EXTEND_LEN) 
 {
     /* 
     ** Phase 1: sender obtains a random secret sharing matrix Q of matrix T from receiver
@@ -307,7 +307,7 @@ void Send(NetIO &io, PP &pp, std::vector<block> &vec_m0, std::vector<block> &vec
 }
 
 
-std::vector<block> Receive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
+inline std::vector<block> Receive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
 {
     PrintSplitLine('-'); 
   
@@ -363,7 +363,7 @@ std::vector<block> Receive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver
     return vec_result; 
 }
 
-void OnesidedSend(NetIO &io, PP &pp, std::vector<block> &vec_m, size_t EXTEND_LEN) 
+inline void OnesidedSend(NetIO &io, PP &pp, std::vector<block> &vec_m, size_t EXTEND_LEN) 
 {
     /* 
     ** Phase 1: sender obtains a random secret sharing matrix Q of matrix T from receiver
@@ -413,7 +413,7 @@ void OnesidedSend(NetIO &io, PP &pp, std::vector<block> &vec_m, size_t EXTEND_LE
 }
 
 // the size of vec_result = the hamming weight of vec_selection_bit
-std::vector<block> OnesidedReceive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
+inline std::vector<block> OnesidedReceive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
 {
     PrintSplitLine('-'); 
 
@@ -467,7 +467,7 @@ std::vector<block> OnesidedReceive(NetIO &io, PP &pp, std::vector<uint8_t> &vec_
 */
 
 // one-sided version
-void OnesidedSendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>> &vec_m, size_t EXTEND_LEN) 
+inline void OnesidedSendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>> &vec_m, size_t EXTEND_LEN) 
 {
     PrintSplitLine('-'); 
 	
@@ -507,7 +507,7 @@ void OnesidedSendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>>
     PrintSplitLine('-'); 
 }
 
-std::vector<std::vector<uint8_t>> OnesidedReceiveByteVector(NetIO &io, PP &pp, 
+inline std::vector<std::vector<uint8_t>> OnesidedReceiveByteVector(NetIO &io, PP &pp, 
                                   std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
 {
     PrintSplitLine('-'); 
@@ -547,7 +547,7 @@ std::vector<std::vector<uint8_t>> OnesidedReceiveByteVector(NetIO &io, PP &pp,
 }
 
 // standard version
-void SendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>> &vec_m0, std::vector<std::vector<uint8_t>> &vec_m1, size_t EXTEND_LEN) 
+inline void SendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>> &vec_m0, std::vector<std::vector<uint8_t>> &vec_m1, size_t EXTEND_LEN) 
 {
     PrintSplitLine('-'); 
 	
@@ -591,7 +591,7 @@ void SendByteVector(NetIO &io, PP &pp, std::vector<std::vector<uint8_t>> &vec_m0
     PrintSplitLine('-'); 
 }
 
-std::vector<std::vector<uint8_t>> ReceiveByteVector(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
+inline std::vector<std::vector<uint8_t>> ReceiveByteVector(NetIO &io, PP &pp, std::vector<uint8_t> &vec_receiver_selection_bit, size_t EXTEND_LEN)
 {
     PrintSplitLine('-'); 
     

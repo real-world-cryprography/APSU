@@ -41,7 +41,7 @@ std::vector<std::array<osuCrypto::block, 2>> OSNSender::gen_benes_server_osn(int
 	}
 	if(OT_type::KunlunOT == ot_type){
 		std::vector<osuCrypto::block> tmpMsg(switches.size());
-		apsu::KunlunOT::IKNP_KL_RandomReceiver(SendChl,switches,tmpMsg,thread_num);
+		apsu::KunlunOT::ALSZ_KL_RandomReceiver(SendChl,switches,tmpMsg,thread_num);
 		oc::AES aes(ZeroBlock);
 		for (auto i = 0; i < recvMsg.size(); i++)
 			recvMsg[i] = { tmpMsg[i], aes.ecbEncBlock(tmpMsg[i]) };

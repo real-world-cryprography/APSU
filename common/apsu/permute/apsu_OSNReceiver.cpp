@@ -158,7 +158,7 @@ std::vector<std::vector<oc::block>> OSNReceiver::gen_benes_client_osn(int values
 	if(ot_type == OT_type::KunlunOT){
 
 		std::vector<std::array<osuCrypto::block, 2>> tmp_messages(switches);
-		apsu::KunlunOT::IKNP_KL_RandomSender(RecvChl,tmp_messages,thread_num); // sample random ot blocks
+		apsu::KunlunOT::ALSZ_KL_RandomSender(RecvChl,tmp_messages,thread_num); // sample random ot blocks
 		oc::AES aes(ZeroBlock);
 		for (auto i = 0; i < ot_messages.size(); i++)
 		{

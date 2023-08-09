@@ -431,7 +431,7 @@ namespace apsu {
             
 #if APSU == 1
             std::vector<block> Diffset;
-            KunlunOT::IKNP_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
+            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
 #endif
 
            

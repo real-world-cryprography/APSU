@@ -16,6 +16,7 @@ this file includes commonly used head files
 #include <cmath>
 #include <vector>
 #include <set>
+#include <random>
 #include <unordered_map>
 #include <unordered_set>
 #include <thread>

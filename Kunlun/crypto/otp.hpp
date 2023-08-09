@@ -36,7 +36,7 @@ inline std::vector<uint8_t> XOR(std::vector<uint8_t> &vec_A, std::vector<uint8_t
 
 namespace OTP{
 
-std::vector<uint8_t> Enc(block &key, std::vector<uint8_t>& plaintext)
+inline std::vector<uint8_t> Enc(block &key, std::vector<uint8_t>& plaintext)
 {
     size_t LEN = plaintext.size(); 
     PRG::Seed seed = PRG::SetSeed(&key, 0);
@@ -45,7 +45,7 @@ std::vector<uint8_t> Enc(block &key, std::vector<uint8_t>& plaintext)
     return ciphertext; 
 }
 
-std::vector<uint8_t> Dec(block &key, std::vector<uint8_t>& ciphertext)
+inline std::vector<uint8_t> Dec(block &key, std::vector<uint8_t>& ciphertext)
 {
     size_t LEN = ciphertext.size(); 
     PRG::Seed seed = PRG::SetSeed(&key, 0);
@@ -54,7 +54,7 @@ std::vector<uint8_t> Dec(block &key, std::vector<uint8_t>& ciphertext)
     return plaintext; 
 }
 
-std::string Enc(block &key, std::string& str_plaintext)
+inline std::string Enc(block &key, std::string& str_plaintext)
 {
     size_t LEN = str_plaintext.size(); 
     std::vector<uint8_t> plaintext(LEN); 
@@ -65,7 +65,7 @@ std::string Enc(block &key, std::string& str_plaintext)
     return str_ciphertext; 
 }
 
-std::string Dec(block &key, std::string& str_ciphertext)
+inline std::string Dec(block &key, std::string& str_ciphertext)
 {
     size_t LEN = str_ciphertext.size(); 
     std::vector<uint8_t> ciphertext(LEN); 

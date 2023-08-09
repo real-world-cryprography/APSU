@@ -616,7 +616,7 @@ namespace apsu {
             for(int i=0;i<item_cnt;i++)
                 shuffleMessages[permutation[i]]=sendMessages[i];
 
-            KunlunOT::IKNP_KL_ChosenSender(client,shuffleMessages);
+            KunlunOT::ALSZ_KL_ChosenSender(client,shuffleMessages);
 #else
             for(int item_trunc_idx=0;item_trunc_idx < item_len;item_trunc_idx++){
                 for(int i=0;i<item_cnt;i++){

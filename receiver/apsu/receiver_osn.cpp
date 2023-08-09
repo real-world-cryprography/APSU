@@ -409,7 +409,6 @@ namespace apsu {
             size_t MPOPRFOutlen = 0;
             {
                 
-                
                 vector<oc::block> receiver_share;
 
                 
@@ -443,7 +442,7 @@ namespace apsu {
                     mpoprf_in.emplace_back(Block::zero_block);
             
                 // mp-oprf 
-                Block::PrintBlocks(mpoprf_in);
+                // Block::PrintBlocks(mpoprf_in);
                 
      
                 // group = EC_GROUP_new_by_curve_name(415);
@@ -451,11 +450,11 @@ namespace apsu {
 
                 size_t set_size = mpoprf_in.size();
                 size_t log_set_size=int(log2(set_size)+1);
+                CRYPTO_Initialize();
 
                 std::cout<<set_size<<std::endl;
                 std::cout<<log_set_size<<std::endl;
                 OTEOPRF::PP pp; 
-                std::cout <<group << std::endl;
 
                 
                 OTEOPRF::Setup(pp,log_set_size);
@@ -478,6 +477,7 @@ namespace apsu {
                     }
                     printf("\n");
                 }
+                CRYPTO_Finalize();
 
             }
             
@@ -503,7 +503,7 @@ namespace apsu {
             APSU_LOG_INFO("Finished processing query request");
 #if APSU == 1
             std::vector<block> Diffset(item_cnt);
-            KunlunOT::IKNP_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
+            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
 #endif
 
 #if CARD == 1
