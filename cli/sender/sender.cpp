@@ -18,8 +18,8 @@
 #include "apsu/network/zmq/zmq_channel.h"
 #include "apsu/thread_pool_mgr.h"
 #include "apsu/version.h"
-#include "common/common_utils.h"
-#include "common/csv_reader.h"
+#include "common_utils.h"
+#include "csv_reader.h"
 #include "sender/clp.h"
 
 #include "coproto/Socket/AsioSocket.h"
@@ -175,10 +175,9 @@ int remote_query(const CLP &cmd)
 
     
 
-    vector<MatchRecord> query_result;
     try {
         APSU_LOG_INFO("Sending APSU query");
-        query_result = sender.request_query(items_without_OPRF,  channel, orig_items,SenderKKRTSocket);
+        sender.request_query(items_without_OPRF,  channel, orig_items,SenderKKRTSocket);
         APSU_LOG_INFO("Received APSU query response");
     } catch (const exception &ex) {
         APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());

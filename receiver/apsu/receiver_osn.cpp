@@ -17,6 +17,8 @@
 #include "apsu/util/stopwatch.h"
 #include "apsu/util/utils.h"
 
+#include "apsu/peqt/OSNPEQT.h"
+
 // SEAL
 #include "seal/evaluator.h"
 #include "seal/modulus.h"
@@ -39,7 +41,6 @@ namespace apsu {
 
         namespace {
             vector<oc::block> random_matrix;
-            std::vector<std::vector<uint8_t>> mpoprf_out;
             template <typename T>
             bool has_n_zeros(T *ptr, size_t count)
             {
@@ -134,46 +135,7 @@ namespace apsu {
             all_timer.setTimePoint("RunParames finish");
         }
 
-        void Receiver::RunOPRF(
-            const OPRFRequest &oprf_request,
-            OPRFKey key,
-            network::Channel &chl,
-            function<void(Channel &, Response)> send_fun)
-        {
-            STOPWATCH(recv_stopwatch, "Receiver::RunOPRF");
-
-            if (!oprf_request) {
-                APSU_LOG_ERROR("Failed to process OPRF request: request is invalid");
-                throw invalid_argument("request is invalid");
-            }
-
-            APSU_LOG_INFO(
-                "Start processing OPRF request for " << oprf_request->data.size() / oprf_query_size
-                                                     << " items");
-
-            // OPRF response has the same size as the OPRF query
-            OPRFResponse response_oprf = make_unique<OPRFResponse::element_type>();
-            try {
-                response_oprf->data = OPRFSender::ProcessQueries(oprf_request->data, key);
-            } catch (const exception &ex) {
-                // Something was wrong with the OPRF request. This can mean malicious
-                // data being sent to the receiver in an attempt to extract OPRF key.
-                // Best not to respond anything.
-                APSU_LOG_ERROR("Processing OPRF request threw an exception: " << ex.what());
-                return;
-            }
-
-            try {
-                send_fun(chl, move(response_oprf));
-            } catch (const exception &ex) {
-                APSU_LOG_ERROR(
-                    "Failed to send response to OPRF request; function threw an exception: "
-                    << ex.what());
-                throw;
-            }
-
-            APSU_LOG_INFO("Finished processing OPRF request");
-        }
+      
 
         void Receiver::RunQuery(
             const Query &query,
@@ -223,11 +185,11 @@ namespace apsu {
             
             
             
-            size_t max_bin_bundle_conut_alpha = 0;
+            size_t alpha_max_cache_count = 0;
             std::vector<size_t> cache_cnt_per_bundle;
             for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
                 cache_cnt_per_bundle.emplace_back(receiver_db->get_bin_bundle_count(static_cast<uint32_t>(bundle_idx)));
-                max_bin_bundle_conut_alpha = std::max(max_bin_bundle_conut_alpha,
+                alpha_max_cache_count = std::max(alpha_max_cache_count,
                     cache_cnt_per_bundle[bundle_idx]);
             }
             
@@ -240,7 +202,7 @@ namespace apsu {
             uint32_t package_count = safe_cast<uint32_t>(receiver_db->get_bin_bundle_count());
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
-            response_query->alpha_max_cache_count = max_bin_bundle_conut_alpha;
+            response_query->alpha_max_cache_count = alpha_max_cache_count;
             APSU_LOG_INFO(package_count);
             item_cnt = bundle_idx_count * safe_cast<uint32_t>(params.items_per_bundle());
             APSU_LOG_INFO(item_cnt);
@@ -272,7 +234,7 @@ namespace apsu {
                 size_t items_per_bundle = safe_cast<size_t>(params.items_per_bundle());
  
 
-                for(size_t cache_idx = 0;cache_idx < max_bin_bundle_conut_alpha;cache_idx++)
+                for(size_t cache_idx = 0;cache_idx < alpha_max_cache_count;cache_idx++)
                  {
                     for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++){
                         // judge need to padding the cache
@@ -401,109 +363,21 @@ namespace apsu {
                 f.get();
             }
 
-            vector<block> mpoprf_in;
+            // vector<block> mpoprf_in;
             size_t shuffle_size = random_matrix.size();
             // permute and share on matrix 
-            std::vector<std::vector<uint8_t>> mpoprf_recv;
+            // std::vector<std::vector<uint8_t>> mpoprf_recv;
             NetIO server("server", "", 59999);
             size_t MPOPRFOutlen = 0;
-            {
-                
-                vector<oc::block> receiver_share;
 
-                
-                APSU_LOG_INFO("size"<<shuffle_size<<"==============");
-               
-                all_timer.setTimePoint("random gen finish");
-                int numThreads=8;
-             
-
-                OSNReceiver osn;
-                osn.init(shuffle_size,OSNReceiver::OT_type::KunlunOT,NUMBER_OF_THREADS);
-
-                all_timer.setTimePoint("set -> block_set");
-                
-                APSU_LOG_INFO("per change"<<random_matrix.size());
-                all_timer.setTimePoint("before run_osn");
-
-                receiver_share =osn.run_osn(random_matrix,ReceiverChl,server);
-                
-                all_timer.setTimePoint("after run_osn");
- 
-                all_timer.setTimePoint("block_set -> set");
-                send_size=0,recv_size =0;
-  
-                
-                for(auto x: receiver_share){
-                    mpoprf_in.emplace_back(block_oc_to_std(x));
-                }
-                size_t padding = 128-mpoprf_in.size()%128;
-                for(int i = 0;i<padding;i++)
-                    mpoprf_in.emplace_back(Block::zero_block);
-            
-                // mp-oprf 
-                // Block::PrintBlocks(mpoprf_in);
-                
-     
-                // group = EC_GROUP_new_by_curve_name(415);
-                // generator = EC_GROUP_get0_generator(group);
-
-                size_t set_size = mpoprf_in.size();
-                size_t log_set_size=int(log2(set_size)+1);
-                CRYPTO_Initialize();
-
-                std::cout<<set_size<<std::endl;
-                std::cout<<log_set_size<<std::endl;
-                OTEOPRF::PP pp; 
-
-                
-                OTEOPRF::Setup(pp,log_set_size);
-                std::cout << __FILE__ << __LINE__ << std::endl;
-                mpoprf_out = OTEOPRF::Client(server,pp,mpoprf_in,set_size);
-                APSU_LOG_INFO(pp.OUTPUT_LEN);
-               
-                MPOPRFOutlen = pp.OUTPUT_LEN;
-                server.ReceiveBytesArray(mpoprf_recv);
-               
-                for(int i = 0;i<shuffle_size;i++){
-                    //  APSU_LOG_INFO(i);
-                    // std::cout << mpoprf_recv[i] << std::endl;
-                    for(size_t idx = 0; idx < pp.OUTPUT_LEN ; idx++){
-                        printf("%02x",(uint8_t)mpoprf_out[i][idx]);
-                    }
-                    printf("\n");
-                    for(size_t idx = 0; idx < pp.OUTPUT_LEN ; idx++){
-                        printf("%02x",(uint8_t)mpoprf_recv[i][idx]);
-                    }
-                    printf("\n");
-                }
-                CRYPTO_Finalize();
-
-            }
-            
-            // generate ans;
-            {
-
-            for(size_t cache_idx = 0;cache_idx<max_bin_bundle_conut_alpha;cache_idx++){
-                for(size_t item_idx = 0;item_idx<item_cnt;item_idx++){
-                    auto& OTEOPRFValue  = mpoprf_out[cache_idx*item_cnt+item_idx];
-                    auto& OTEOPRFRecv   = mpoprf_recv[cache_idx*item_cnt+item_idx];
-                    
-                    if(memcmp(OTEOPRFRecv.data(),OTEOPRFValue.data(),MPOPRFOutlen)==0) ans.emplace_back(item_idx);
-                }
-            }
-           
-
-            }
-
-            cout<<"pack_cnt"<<pack_cnt<<endl;
-            cout<<"ans_cnt"<<ans.size()<<endl;
+            auto peqt_ans = peqt::osn_peqt_receiver(ReceiverChl,server,random_matrix,alpha_max_cache_count,item_cnt);
+          
 
             all_timer.setTimePoint("ProcessBinBundleCache finished");
             APSU_LOG_INFO("Finished processing query request");
 #if APSU == 1
             std::vector<block> Diffset(item_cnt);
-            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
+            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,peqt_ans);
 #endif
 
 #if CARD == 1

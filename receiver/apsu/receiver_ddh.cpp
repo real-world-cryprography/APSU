@@ -16,15 +16,13 @@
 #include "apsu/thread_pool_mgr.h"
 #include "apsu/util/stopwatch.h"
 #include "apsu/util/utils.h"
-
+#include "apsu/peqt/DDHPEQT.h"
 // SEAL
 #include "seal/evaluator.h"
 #include "seal/modulus.h"
 #include "seal/util/common.h"
 
-#include "Kunlun/mpc/peqt/peqt_from_ddh.hpp"
-#include "Kunlun/mpc/ot/naor_pinkas_ot.hpp"
-#include  "Kunlun/crypto/setup.hpp"
+
 
 #include "coproto/Socket/AsioSocket.h"
 
@@ -136,46 +134,7 @@ namespace apsu {
             all_timer.setTimePoint("RunParames finish");
         }
 
-        void Receiver::RunOPRF(
-            const OPRFRequest &oprf_request,
-            OPRFKey key,
-            network::Channel &chl,
-            function<void(Channel &, Response)> send_fun)
-        {
-            STOPWATCH(recv_stopwatch, "Receiver::RunOPRF");
-
-            if (!oprf_request) {
-                APSU_LOG_ERROR("Failed to process OPRF request: request is invalid");
-                throw invalid_argument("request is invalid");
-            }
-
-            APSU_LOG_INFO(
-                "Start processing OPRF request for " << oprf_request->data.size() / oprf_query_size
-                                                     << " items");
-
-            // OPRF response has the same size as the OPRF query
-            OPRFResponse response_oprf = make_unique<OPRFResponse::element_type>();
-            try {
-                response_oprf->data = OPRFSender::ProcessQueries(oprf_request->data, key);
-            } catch (const exception &ex) {
-                // Something was wrong with the OPRF request. This can mean malicious
-                // data being sent to the receiver in an attempt to extract OPRF key.
-                // Best not to respond anything.
-                APSU_LOG_ERROR("Processing OPRF request threw an exception: " << ex.what());
-                return;
-            }
-
-            try {
-                send_fun(chl, move(response_oprf));
-            } catch (const exception &ex) {
-                APSU_LOG_ERROR(
-                    "Failed to send response to OPRF request; function threw an exception: "
-                    << ex.what());
-                throw;
-            }
-
-            APSU_LOG_INFO("Finished processing OPRF request");
-        }
+      
 
         void Receiver::RunQuery(
             const Query &query,
@@ -226,11 +185,11 @@ namespace apsu {
             PowersDag pd = query.pd();
 
             // get the col of the matrix 
-            size_t max_bin_bundle_conut_alpha = 0;
+            size_t alpha_max_cache_count = 0;
             std::vector<size_t> cache_cnt_per_bundle;
             for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
                 cache_cnt_per_bundle.emplace_back(receiver_db->get_bin_bundle_count(static_cast<uint32_t>(bundle_idx)));
-                max_bin_bundle_conut_alpha = std::max(max_bin_bundle_conut_alpha,
+                alpha_max_cache_count = std::max(alpha_max_cache_count,
                     cache_cnt_per_bundle[bundle_idx]);
             }
 
@@ -238,7 +197,7 @@ namespace apsu {
             uint32_t package_count = safe_cast<uint32_t>(receiver_db->get_bin_bundle_count());
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
-            response_query->alpha_max_cache_count = max_bin_bundle_conut_alpha;
+            response_query->alpha_max_cache_count = alpha_max_cache_count;
             APSU_LOG_INFO(package_count);
             item_cnt = bundle_idx_count * safe_cast<uint32_t>(params.items_per_bundle());
             APSU_LOG_INFO(item_cnt);
@@ -279,7 +238,7 @@ namespace apsu {
                 vector<vector<oc::block > > receiver_share(block_num);
                 
                
-                for(size_t cache_idx = 0;cache_idx < max_bin_bundle_conut_alpha;cache_idx++)
+                for(size_t cache_idx = 0;cache_idx < alpha_max_cache_count;cache_idx++)
                  {
                     for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++){
                         // judge need to padding the cache
@@ -412,26 +371,14 @@ namespace apsu {
 
             std::vector<uint8_t> vec_result;
             NetIO server("server","",59999);
+            auto peqt_ans = peqt::ddh_peqt_receiver(server,random_matrix,alpha_max_cache_count,item_cnt);
 
-            {
-                CRYPTO_Initialize();
-                // Block::PrintBlocks(random_matrix);
-                vec_result = DDHPEQT::Receive(server,random_matrix,max_bin_bundle_conut_alpha,item_cnt);
-                CRYPTO_Finalize();
-            }
-           // APSU_LOG_INFO(item_cnt);
-            for(size_t cache_idx = 0;cache_idx<max_bin_bundle_conut_alpha;cache_idx++){
-                for(size_t item_idx = 0;item_idx<item_cnt;item_idx++){
-                    if(vec_result[cache_idx*item_cnt+item_idx]) ans.emplace_back(item_idx);
-                }
-            }
-     
             all_timer.setTimePoint("ProcessBinBundleCache finished");
             APSU_LOG_INFO("Finished processing query request");
             
 #if APSU == 1
             std::vector<block> Diffset;
-            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,ans);
+            KunlunOT::ALSZ_KL_ChosenReceiver(server,Diffset,item_cnt,peqt_ans);
 #endif
 
            

@@ -60,12 +60,7 @@ namespace apsu {
                 std::unique_ptr<network::ZMQReceiverOperation> rop,
                 network::ZMQReceiverChannel &channel);
 
-            /**
-            Dispatch an OPRF query request to the Receiver.
-            */
-            void dispatch_oprf(
-                std::unique_ptr<network::ZMQReceiverOperation> rop,
-                network::ZMQReceiverChannel &channel);
+  
 
             /**
             Dispatch a Query request to the Receiver.

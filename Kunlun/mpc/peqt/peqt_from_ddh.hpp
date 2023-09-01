@@ -16,7 +16,7 @@ namespace DDHPEQT{
 using Serialization::operator<<; 
 using Serialization::operator>>; 
 
-std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM, size_t COLUMN_NUM)
+inline std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM, size_t COLUMN_NUM)
 {
     PrintSplitLine('-'); 
     auto start_time = std::chrono::steady_clock::now(); 
@@ -86,7 +86,7 @@ std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM,
     return column_map; 
 }
 
-std::vector<uint8_t> Receive(NetIO &io, std::vector<block> &vec_X, size_t ROW_NUM, size_t COLUMN_NUM) 
+inline std::vector<uint8_t> Receive(NetIO &io, std::vector<block> &vec_X, size_t ROW_NUM, size_t COLUMN_NUM) 
 {    
     PrintSplitLine('-'); 
     

@@ -20,6 +20,7 @@
 #include "apsu/util/utils.h"
 
 #include "apsu/utils.h"
+#include "apsu/peqt/DDHPEQT.h"
 
 
 // SEAL
@@ -32,9 +33,6 @@
 #include "seal/util/defines.h"
 
 
-#include "Kunlun/mpc/ot/iknp_ote.hpp"
-#include "Kunlun/mpc/peqt/peqt_from_ddh.hpp"
-#include "Kunlun/crypto/setup.hpp"
 #include "libOTe/NChooseOne/Kkrt/KkrtNcoOtReceiver.h"
 using milliseconds_ratio = std::ratio<1, 1000>;
 using duration_millis = std::chrono::duration<double, milliseconds_ratio>;
@@ -105,51 +103,7 @@ namespace apsu {
         std::vector<block> decrypt_randoms_matrix;
 
 
-        void ResponseOT(oc::Socket socket,std::vector<std::array<oc::block, 2>>&  shuffleMessages){
-            APSU_LOG_INFO(__FILE__ << __LINE__);
-
-            NetIO server("server","",40000);
-            APSU_LOG_INFO(__FILE__ << __LINE__);
-
-            CRYPTO_Initialize(); 
-            auto pp = IKNPOTE::Setup(128);
-
-            size_t item_len = shuffleMessages.size();
-            size_t pad_len = ((item_len >> 7) + 1) << 7;
-            std::vector<block> oneside_send(pad_len);
-
-            for(size_t idx =0 ;idx < item_len; idx++ ){
-                auto cont = shuffleMessages[idx][0];
-                oneside_send[idx] = Block::MakeBlock(cont.get<uint64_t>()[1],cont.get<uint64_t>()[0]);
-            }
-
-            IKNPOTE::OnesidedSend(server,pp,oneside_send,pad_len);
-            CRYPTO_Finalize();  
-            // oc::PRNG prng(_mm_set_epi32(4253465,3434565,23987025,234435));
-            // oc::IknpOtExtSender IKNPsender;
-            // oc::DefaultBaseOT base;
-            // oc::BitVector bv(128);
-            // std::array<oc::block, 128> baseMsg;
-            // bv.randomize(prng);
-            // APSU_LOG_INFO(__FILE__ << __LINE__);
-
-            // coproto::sync_wait(base.receive(bv, baseMsg, prng, socket));
-            // IKNPsender.setBaseOts(baseMsg, bv);
-            // APSU_LOG_INFO(__FILE__ << __LINE__);
-
-            // auto proto = IKNPsender.sendChosen(shuffleMessages, prng, socket);
-            // coproto::sync_wait(proto);
         
-            // int recv_num = socket.bytesReceived();
-            // int send_num = socket.bytesSent();
-
-    
-            // APSU_LOG_INFO("OT send_com_size ps"<<send_num/1024<<"KB");
-            // APSU_LOG_INFO("OT recv_com_size ps"<<recv_num/1024<<"KB");
-
-   
-
-        }
     
     } // namespace
 
@@ -272,78 +226,9 @@ namespace apsu {
 
 // oprf has been removed
 
-        OPRFReceiver Sender::CreateOPRFReceiver(const vector<Item> &items)
-        {
-            STOPWATCH(sender_stopwatch, "Sender::CreateOPRFReceiver");
+      
 
-            OPRFReceiver oprf_sender(items);
-            APSU_LOG_INFO("Created OPRFSender for " << oprf_sender.item_count() << " items");
 
-            return oprf_sender;
-        }
-
-        pair<vector<HashedItem>, vector<LabelKey>> Sender::ExtractHashes(
-            const OPRFResponse &oprf_response, const OPRFReceiver &oprf_sender)
-        {
-            STOPWATCH(sender_stopwatch, "Sender::ExtractHashes");
-
-            if (!oprf_response) {
-                APSU_LOG_ERROR("Failed to extract OPRF hashes for items: oprf_response is null");
-                return {};
-            }
-
-            auto response_size = oprf_response->data.size();
-            size_t oprf_response_item_count = response_size / oprf_response_size;
-            if ((response_size % oprf_response_size) ||
-                (oprf_response_item_count != oprf_sender.item_count())) {
-                APSU_LOG_ERROR(
-                    "Failed to extract OPRF hashes for items: unexpected OPRF response size ("
-                    << response_size << " B)");
-                return {};
-            }
-
-            vector<HashedItem> items(oprf_sender.item_count());
-            vector<LabelKey> label_keys(oprf_sender.item_count());
-            oprf_sender.process_responses(oprf_response->data, items, label_keys);
-            APSU_LOG_INFO("Extracted OPRF hashes for " << oprf_response_item_count << " items");
-
-            return make_pair(move(items), move(label_keys));
-        }
-// oprf has been removed
-        unique_ptr<ReceiverOperation> Sender::CreateOPRFRequest(const OPRFReceiver &oprf_sender)
-        {
-            auto rop = make_unique<ReceiverOperationOPRF>();
-            rop->data = oprf_sender.query_data();
-            APSU_LOG_INFO("Created OPRF request for " << oprf_sender.item_count() << " items");
-
-            return rop;
-        }
-// oprf has been removed
-        pair<vector<HashedItem>, vector<LabelKey>> Sender::RequestOPRF(
-            const vector<Item> &items, NetworkChannel &chl)
-        {
-            auto oprf_sender = CreateOPRFReceiver(items);
-
-            // Create OPRF request and send to Sender
-            chl.send(CreateOPRFRequest(oprf_sender));
-
-            // Wait for a valid message of the right type
-            OPRFResponse response;
-            bool logged_waiting = false;
-            while (!(response = to_oprf_response(chl.receive_response()))) {
-                if (!logged_waiting) {
-                    // We want to log 'Waiting' only once, even if we have to wait for several
-                    // sleeps.
-                    logged_waiting = true;
-                    APSU_LOG_INFO("Waiting for response to OPRF request");
-                }
-
-                this_thread::sleep_for(50ms);
-            }
-
-            // Extract the OPRF hashed items
-            return ExtractHashes(response, oprf_sender);
-        }
 
         pair<Request, IndexTranslationTable> Sender::create_query(
             const vector<HashedItem> &items,
@@ -527,17 +412,17 @@ namespace apsu {
             return { move(rop), itt };
         }
 
-        vector<MatchRecord> Sender::request_query(
+        void Sender::request_query(
             const vector<HashedItem> &items,
             NetworkChannel &chl,
             const vector<string> &origin_item,
-            coproto::AsioSocket SenderKKRTSocket
+            coproto::AsioSocket SenderChl
             )
         {
             ThreadPoolMgr tpm;
 
             // Create query and send to Sender
-            auto query = create_query(items,origin_item,SenderKKRTSocket);
+            auto query = create_query(items,origin_item,SenderChl);
             chl.send(move(query.first));
             auto itt = move(query.second);
             all_timer.setTimePoint("with response start");
@@ -563,11 +448,7 @@ namespace apsu {
             uint32_t item_cnt = bundle_idx_count* items_per_bundle; 
 
         //       int block_num = ((felts_per_item+3)/4);
-            int shuffle_size;
 
-            APSU_LOG_INFO("size"<<shuffle_size);
-            // Set up the result
-            vector<MatchRecord> mrs(query.second.item_count());
 
             // Get the number of ResultPackages we expect to receive
             atomic<uint32_t> package_count{ response->package_count };
@@ -587,7 +468,7 @@ namespace apsu {
                              << " result parts");
             for (size_t t = 0; t < task_count; t++) {
                 futures[t] = tpm.thread_pool().enqueue(
-                    [&]() { process_result_worker(package_count, mrs, itt, chl); });
+                    [&]() { process_result_worker(package_count, itt, chl); });
             }
 
             for (auto &f : futures) {
@@ -595,18 +476,8 @@ namespace apsu {
             }
             // pm-PEQT 
             NetIO client("client", "127.0.0.1", 59999);
-
-            {
-                CRYPTO_Initialize();
-
-
-                // Block::PrintBlocks(decrypt_randoms_matrix);
-
-                permutation = DDHPEQT::Send(client, decrypt_randoms_matrix,  alpha_max_cache_count,item_cnt);
-                decrypt_randoms_matrix.clear();
-                decrypt_randoms_matrix.shrink_to_fit();
-                CRYPTO_Finalize();  
-            }
+            auto permutation = peqt::ddh_peqt_sender(client,decrypt_randoms_matrix,alpha_max_cache_count,item_cnt);
+   
            
              
         
@@ -629,7 +500,6 @@ namespace apsu {
 #endif
 
             all_timer.setTimePoint("decrypt and unpermute finish");
-            return mrs;
         }
 
         void Sender::process_result_part(
@@ -673,7 +543,6 @@ namespace apsu {
 
         void Sender::process_result_worker(
             atomic<uint32_t> &package_count,
-            vector<MatchRecord> &mrs,
             const IndexTranslationTable &itt,
             NetworkChannel &chl)
         {

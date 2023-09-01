@@ -154,20 +154,9 @@ namespace apsu {
             */
             static PSUParams RequestParams(network::NetworkChannel &chl);
 
-            /**
-            Performs an OPRF request on a vector of items through a given channel and returns a
-            vector of OPRF hashed items of the same size as the input vector.
-            */
-            static std::pair<std::vector<HashedItem>, std::vector<LabelKey>> RequestOPRF(
-                const std::vector<Item> &items, network::NetworkChannel &chl);
 
-            /**
-            Performs a PSU or labeled PSU (depending on the sender) query. The query is a vector of
-            items, and the result is a same-size vector of MatchRecord objects. If an item is in the
-            intersection, the corresponding MatchRecord indicates it in the `found` field, and the
-            `label` field may contain the corresponding label if a sender's data included it.
-            */
-            std::vector<MatchRecord> request_query(
+        
+            void request_query(
                 const std::vector<HashedItem> &items,
                 network::NetworkChannel &chl,
                 const std::vector<std::string> &origin_item,
@@ -180,23 +169,6 @@ namespace apsu {
             */
             static Request CreateParamsRequest();
 
-            /**
-            Creates and returns an oprf::OPRFReceiver object for the given items.
-            */
-            static oprf::OPRFReceiver CreateOPRFReceiver(const std::vector<Item> &items);
-
-            /**
-            Creates an OPRF request that can be sent to the sender with the Receiver::SendRequest
-            function.
-            */
-            static Request CreateOPRFRequest(const oprf::OPRFReceiver &oprf_receiver);
-
-            /**
-            Extracts a vector of OPRF hashed items from an OPRFResponse and the corresponding
-            oprf::OPRFReceiver.
-            */
-            static std::pair<std::vector<HashedItem>, std::vector<LabelKey>> ExtractHashes(
-                const OPRFResponse &oprf_response, const oprf::OPRFReceiver &oprf_receiver);
 
             /**
             Creates a Query object from a vector of OPRF hashed items. The query contains the query
@@ -254,7 +226,6 @@ namespace apsu {
 
             void process_result_worker(
                 std::atomic<std::uint32_t> &package_count,
-                std::vector<MatchRecord> &mrs,
                 const IndexTranslationTable &itt,
                 network::NetworkChannel &chl);
 

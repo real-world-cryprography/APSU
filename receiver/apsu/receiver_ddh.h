@@ -188,15 +188,7 @@ namespace apsu {
                 std::function<void(network::Channel &, Response)> send_fun =
                     BasicSend<Response::element_type>);
 
-            /**
-            Generate and send a response to an OPRF request.
-            */
-            void RunOPRF(
-                const OPRFRequest &oprf_request,
-                oprf::OPRFKey key,
-                network::Channel &chl,
-                std::function<void(network::Channel &, Response)> send_fun =
-                    BasicSend<Response::element_type>);
+
 
             /**
             Generate and send a response to a query.

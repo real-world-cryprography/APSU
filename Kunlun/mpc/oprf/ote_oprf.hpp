@@ -48,7 +48,7 @@ struct PP
     NPOT::PP npot_part;
 };
     
-PP Setup(PP& pp,size_t LOG_LEN, size_t statistical_security_parameter = 40)
+inline PP Setup(PP& pp,size_t LOG_LEN, size_t statistical_security_parameter = 40)
 {
     pp.LEN = 1 << LOG_LEN; // LEN = 2^{LOG_LEN}
     pp.matrix_height = pp.LEN;
@@ -77,7 +77,7 @@ PP Setup(PP& pp,size_t LOG_LEN, size_t statistical_security_parameter = 40)
 }
 
 // serialize pp to stream
-std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
+inline std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
 {
     fout << pp.LEN; 
     fout << pp.matrix_height; 
@@ -94,7 +94,7 @@ std::ofstream &operator<<(std::ofstream &fout, const PP &pp)
 }
 
 // deserialize pp from stream
-std::ifstream &operator>>(std::ifstream &fin, PP &pp)
+inline std::ifstream &operator>>(std::ifstream &fin, PP &pp)
 {
     fin >> pp.LEN; 
     fin >> pp.matrix_height; 
@@ -112,7 +112,7 @@ std::ifstream &operator>>(std::ifstream &fin, PP &pp)
 
 
 // save pp to file
-void SavePP(PP &pp, std::string pp_filename)
+inline void SavePP(PP &pp, std::string pp_filename)
 {
     std::ofstream fout; 
     fout.open(pp_filename, std::ios::binary); 
@@ -127,7 +127,7 @@ void SavePP(PP &pp, std::string pp_filename)
 }
 
 // load pp from file
-void FetchPP(PP &pp, std::string pp_filename)
+inline void FetchPP(PP &pp, std::string pp_filename)
 {
     std::ifstream fin; 
     fin.open(pp_filename, std::ios::binary); 
@@ -142,7 +142,7 @@ void FetchPP(PP &pp, std::string pp_filename)
 }
 
 // print pp
-void PrintPP(const PP &pp)
+inline void PrintPP(const PP &pp)
 {
     PrintSplitLine('-'); 
     std::cout << "PP of OTE-based OPRF >>>" << std::endl;
@@ -166,7 +166,7 @@ instantiate a small range PRF F: {0,1}^128 * {0,1}^* -> {0,1}^128 using AES
 ** H1(x) = (z_0||z_1)
 ** F_k(x) = ECBEnc(k, z_0) xor z_1
 */
-std::vector<block> Encode(std::vector<block> &vec_X, block& key)
+inline std::vector<block> Encode(std::vector<block> &vec_X, block& key)
 {
     size_t LEN = vec_X.size(); 
     std::vector<std::vector<uint8_t>> vec_H1_X(LEN, std::vector<uint8_t>(HASH_OUTPUT_LEN));
@@ -197,7 +197,7 @@ std::vector<block> Encode(std::vector<block> &vec_X, block& key)
 }
 
 // hash each row in matrix_mapping_values to a OUTPUT_LEN string (H2:{0,1}^w -> {0,1}^{\ell2})
-std::vector<std::vector<uint8_t>> Packing(PP &pp, std::vector<std::vector<uint8_t>> &matrix_mapping_values)
+inline std::vector<std::vector<uint8_t>> Packing(PP &pp, std::vector<std::vector<uint8_t>> &matrix_mapping_values)
 {
     size_t matrix_width_byte = (pp.matrix_width + 7) >> 3;
 
@@ -230,7 +230,7 @@ std::vector<std::vector<uint8_t>> Packing(PP &pp, std::vector<std::vector<uint8_
 }
 
 // server obtains a matrix with dimension m*w as the OPRF key
-std::vector<std::vector<uint8_t>> Server(NetIO &io, PP &pp)
+inline std::vector<std::vector<uint8_t>> Server(NetIO &io, PP &pp)
 {
     PrintSplitLine('-'); 
     auto start_time = std::chrono::steady_clock::now(); 
@@ -283,7 +283,7 @@ std::vector<std::vector<uint8_t>> Server(NetIO &io, PP &pp)
 }
 
 // server evaluates OPRF values with input set use its own OPRF key
-std::vector<std::vector<uint8_t>> Evaluate(PP &pp, std::vector<std::vector<uint8_t>> &oprf_key, 
+inline std::vector<std::vector<uint8_t>> Evaluate(PP &pp, std::vector<std::vector<uint8_t>> &oprf_key, 
                                   std::vector<block> &vec_X, size_t ITEM_NUM)
 {
     /* step 1: compute F_k(x) (F: {0,1}^128 * {0,1}^* -> {0,1}^128) */
@@ -350,7 +350,7 @@ std::vector<std::vector<uint8_t>> Evaluate(PP &pp, std::vector<std::vector<uint8
 }
 
 // client obtains OPRF values with input set
-std::vector<std::vector<uint8_t>> Client(NetIO &io, PP &pp, std::vector<block> &vec_Y, size_t ITEM_NUM)
+inline std::vector<std::vector<uint8_t>> Client(NetIO &io, PP &pp, std::vector<block> &vec_Y, size_t ITEM_NUM)
 {
     PrintSplitLine('-'); 
     auto start_time = std::chrono::steady_clock::now(); 
