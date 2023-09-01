@@ -156,33 +156,6 @@ namespace apsu {
             }
         }
 
-// oprf has been removed 
-        void ZMQReceiverDispatcher::dispatch_oprf(
-            unique_ptr<ZMQReceiverOperation> rop, ZMQReceiverChannel &chl)
-        {
-            STOPWATCH(recv_stopwatch, "ZMQReceiverDispatcher::dispatch_oprf");
-
-            try {
-                // Extract the OPRF request
-                OPRFRequest oprf_request = to_oprf_request(move(rop->rop));
-
-                receiver_.RunOPRF(
-                    oprf_request,
-                    oprf_key_,
-                    chl,
-                    [&rop](Channel &c, unique_ptr<ReceiverOperationResponse> rop_response) {
-                        auto nrop_response = make_unique<ZMQReceiverOperationResponse>();
-                        nrop_response->rop_response = move(rop_response);
-                        nrop_response->client_id = move(rop->client_id);
-
-                        // We know for sure that the channel is a ReceiverChannel so use static_cast
-                        static_cast<ZMQReceiverChannel &>(c).send(move(nrop_response));
-                    });
-            } catch (const exception &ex) {
-                APSU_LOG_ERROR(
-                    "Receiver threw an exception while processing OPRF request: " << ex.what());
-            }
-        }
 
         void ZMQReceiverDispatcher::dispatch_query(
             unique_ptr<ZMQReceiverOperation> rop, ZMQReceiverChannel &chl)

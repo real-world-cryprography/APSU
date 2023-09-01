@@ -21,7 +21,6 @@
 #include "apsu/receiver_db.h"
 #include "apsu/permute/apsu_OSNReceiver.h"
 
-
 #include <cryptoTools/Network/Session.h>
 #include <cryptoTools/Network/Channel.h>
 #include <cryptoTools/Network/IOService.h>
@@ -182,15 +181,6 @@ namespace apsu {
                 std::function<void(network::Channel &, Response)> send_fun =
                     BasicSend<Response::element_type>);
 
-            /**
-            Generate and send a response to an OPRF request.
-            */
-            void RunOPRF(
-                const OPRFRequest &oprf_request,
-                oprf::OPRFKey key,
-                network::Channel &chl,
-                std::function<void(network::Channel &, Response)> send_fun =
-                    BasicSend<Response::element_type>);
 
             /**
             Generate and send a response to a query.

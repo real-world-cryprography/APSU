@@ -46,8 +46,7 @@ We recommend that you install `libOTe` in the folder `thirdparty\`. If not, plea
 
 
 ### Kunlun
-[Kunlun](https://github.com/yuchen1024/Kunlun) is an efficient and modular crypto library. We use the implement of `MP-OPRF` and `PEQT` in Kunlun, and adjust some paramaters used in `MP-OPRF`. So we recommend that you employ Kunlun in the folder `thirdparty/` directly.
-**TIPS** Temporarily, we have to adjust the number of threads used in Kunlun manually. 
+[Kunlun](https://github.com/yuchen1024/Kunlun) is an efficient and modular crypto library. We have embedded ```Kunlun``` into our code which is a head-only library, so you do not need to build or install ```Kunlun```. 
 ### APSU
 When you have all dependencies ready, you can build APSU by the following commands. 
 ```

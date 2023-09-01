@@ -515,6 +515,7 @@ set(APSU_SOURCE_FILES_RECEIVER_DDH "")
 add_subdirectory(common/apsu)
 add_subdirectory(sender/apsu)
 add_subdirectory(receiver/apsu)
+message(STATUS ${APSU_SOURCE_FILES_SENDER_DDH})
 #message(STATUS "${APSU_SOURCE_FILES_SENDER}")
 target_sources(sender_cli_osn   PRIVATE ${APSU_SOURCE_FILES_SENDER}
                                 PRIVATE ${APSU_SOURCE_FILES_SENDER_OSN}

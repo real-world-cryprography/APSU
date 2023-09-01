@@ -7,7 +7,7 @@
 #include <string>
 
 // Base
-#include "common/base_clp.h"
+#include "base_clp.h"
 
 /**
 Command Line Processor for Receiver.

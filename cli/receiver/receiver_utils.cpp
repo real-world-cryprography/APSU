@@ -8,7 +8,7 @@
 
 // APSU
 #include "apsu/log.h"
-#include "common/common_utils.h"
+#include "common_utils.h"
 #include "receiver/receiver_utils.h"
 
 // SEAL

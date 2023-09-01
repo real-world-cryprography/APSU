@@ -43,6 +43,9 @@ using duration_millis = std::chrono::duration<double, milliseconds_ratio>;
 #include "Kunlun/mpc/oprf/ote_oprf.hpp"
 #include "Kunlun/mpc/ot/alsz_ote.hpp"
 #include "coproto/Socket/AsioSocket.h"
+
+
+#include "apsu/peqt/OSNPEQT.h"
 using namespace std;
 using namespace seal;
 using namespace seal::util;
@@ -309,85 +312,13 @@ namespace apsu {
             return *response->params;
         }
 
-// oprf has been removed
 
-        OPRFReceiver Sender::CreateOPRFReceiver(const vector<Item> &items)
-        {
-            STOPWATCH(sender_stopwatch, "Receiver::CreateOPRFReceiver");
 
-            OPRFReceiver oprf_receiver(items);
-            APSU_LOG_INFO("Created OPRFReceiver for " << oprf_receiver.item_count() << " items");
-
-            return oprf_receiver;
-        }
-
-        pair<vector<HashedItem>, vector<LabelKey>> Sender::ExtractHashes(
-            const OPRFResponse &oprf_response, const OPRFReceiver &oprf_receiver)
-        {
-            STOPWATCH(sender_stopwatch, "Receiver::ExtractHashes");
-
-            if (!oprf_response) {
-                APSU_LOG_ERROR("Failed to extract OPRF hashes for items: oprf_response is null");
-                return {};
-            }
-
-            auto response_size = oprf_response->data.size();
-            size_t oprf_response_item_count = response_size / oprf_response_size;
-            if ((response_size % oprf_response_size) ||
-                (oprf_response_item_count != oprf_receiver.item_count())) {
-                APSU_LOG_ERROR(
-                    "Failed to extract OPRF hashes for items: unexpected OPRF response size ("
-                    << response_size << " B)");
-                return {};
-            }
-
-            vector<HashedItem> items(oprf_receiver.item_count());
-            vector<LabelKey> label_keys(oprf_receiver.item_count());
-            oprf_receiver.process_responses(oprf_response->data, items, label_keys);
-            APSU_LOG_INFO("Extracted OPRF hashes for " << oprf_response_item_count << " items");
-
-            return make_pair(move(items), move(label_keys));
-        }
-// oprf has been removed
-        unique_ptr<ReceiverOperation> Sender::CreateOPRFRequest(const OPRFReceiver &oprf_receiver)
-        {
-            auto sop = make_unique<ReceiverOperationOPRF>();
-            sop->data = oprf_receiver.query_data();
-            APSU_LOG_INFO("Created OPRF request for " << oprf_receiver.item_count() << " items");
-
-            return sop;
-        }
-// oprf has been removed
-        pair<vector<HashedItem>, vector<LabelKey>> Sender::RequestOPRF(
-            const vector<Item> &items, NetworkChannel &chl)
-        {
-            auto oprf_receiver = CreateOPRFReceiver(items);
-
-            // Create OPRF request and send to Sender
-            chl.send(CreateOPRFRequest(oprf_receiver));
-
-            // Wait for a valid message of the right type
-            OPRFResponse response;
-            bool logged_waiting = false;
-            while (!(response = to_oprf_response(chl.receive_response()))) {
-                if (!logged_waiting) {
-                    // We want to log 'Waiting' only once, even if we have to wait for several
-                    // sleeps.
-                    logged_waiting = true;
-                    APSU_LOG_INFO("Waiting for response to OPRF request");
-                }
-
-                this_thread::sleep_for(50ms);
-            }
-
-            // Extract the OPRF hashed items
-            return ExtractHashes(response, oprf_receiver);
-        }
 
         pair<Request, IndexTranslationTable> Sender::create_query(
             const vector<HashedItem> &items,
             const std::vector<string> &origin_item,
-            coproto::AsioSocket SenderKKRTSocket)
+            oc::Socket SenderChl)
         {
             APSU_LOG_INFO("Creating encrypted query for " << items.size() << " items");
             STOPWATCH(sender_stopwatch, "Sender::create_query");
@@ -494,7 +425,7 @@ namespace apsu {
 #endif
             // Set up unencrypted query data
             vector<PlaintextPowers> plain_powers;
-            auto receiver_data = oprf_receiver(cuckoo.table(),SenderKKRTSocket);
+            auto receiver_data = oprf_receiver(cuckoo.table(),SenderChl);
 
             // prepare_data
             {
@@ -568,12 +499,12 @@ namespace apsu {
             const vector<HashedItem> &items,
             NetworkChannel &chl,
             const vector<string> &origin_item,
-            coproto::AsioSocket SenderKKRTSocket)
+            oc::Socket SenderChl)
         {
             ThreadPoolMgr tpm;
 
             // Create query and send to Sender
-            auto query = create_query(items,origin_item,SenderKKRTSocket);
+            auto query = create_query(items,origin_item,SenderChl);
             chl.send(move(query.first));
             auto itt = move(query.second);
             all_timer.setTimePoint("with response start");
@@ -630,68 +561,10 @@ namespace apsu {
 
             NetIO client("client", "127.0.0.1", 59999);
 
-            vector<int> col_permutation;
-            {
-                int numThreads=8;
+            vector<int> col_permutation = 
+                peqt::osn_peqt_sender(SenderChl,client,decrypt_randoms_matrix,alpha_max_cache_count,item_cnt);
 
-
-                OSNSender osn;
-                osn.init(alpha_max_cache_count,item_cnt,OSNSender::OT_type::KunlunOT,NUMBER_OF_THREADS,"");
-                permutation = osn.dest;
-                col_permutation = osn.cols_premutation;
-                all_timer.setTimePoint("before osn");
-                send_share = osn.run_osn(SenderKKRTSocket,client);
-                all_timer.setTimePoint("after osn");
-                
-
-
-            
-                std::vector<oc::block> shuffle_decrypt_randoms_matrix(shuffle_size);
-                // template shuffle schream
-                for(int i = 0;i<shuffle_size;i++){
-                    shuffle_decrypt_randoms_matrix[i] = decrypt_randoms_matrix[permutation[i]];
-                }
-                for(int i = 0;i<shuffle_size;i++){
-                    mpoprf_in.emplace_back(block_oc_to_std((shuffle_decrypt_randoms_matrix[i]^send_share[i])));
-                }
-                size_t padding = 128-mpoprf_in.size()%128;
-                for(int i = 0;i<padding;i++)
-                    mpoprf_in.emplace_back(Block::all_one_block);
-                //APSU_LOG_INFO("padding size"<<mpoprf_in.size());
-            
-            
-                CRYPTO_Initialize();
-                std::cout << generator << std::endl;
-
-                APSU_LOG_INFO("test");
-                //APSU_LOG_INFO(decrypt_randoms_matrix.size()<<item_cnt<<alpha_max_cache_count);
-                all_timer.setTimePoint("decrypt finish");
-                size_t set_size = mpoprf_in.size();
-                size_t log_set_size=int(log2(set_size)+1);
-
-                std::string pp_filename = "MPOPRF.pp"; 
-                OTEOPRF::PP pp; 
-                // pp.npot_part.g.point_ptr = EC_POINT_new(group);
-                // cout<<set_size<<endl;
-                OTEOPRF::Setup(pp,log_set_size);
-                // if(!FileExist(pp_filename)){
-                //     pp = MPOPRF::Setup(log_set_size); // 40 is the statistical parameter
-                //     MPOPRF::SavePP(pp, pp_filename); 
-                // }
-                // else{
-                //     MPOPRF::FetchPP(pp, pp_filename); 
-                // }
-
-                int test = 0;
-                APSU_LOG_INFO(__FILE__ << __LINE__<<"test"<<test);            
-                auto mpoprf_key = OTEOPRF::Server(client,pp);
-                
-                std::vector<std::vector<uint8_t>> mpoprf_out = OTEOPRF::Evaluate(pp,mpoprf_key,mpoprf_in,set_size);
-                client.SendBytesArray(mpoprf_out);
-
-                CRYPTO_Finalize();
-            }
-           // Block::PrintBlocks(decrypt_randoms_matrix);
+         
 
             APSU_LOG_INFO("permute"<<permutation.size()) 
 

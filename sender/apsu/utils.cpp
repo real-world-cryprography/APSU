@@ -13,7 +13,7 @@ using duration_millis = std::chrono::duration<double, milliseconds_ratio>;
 
 namespace apsu{
     namespace sender{
-        std::vector<kuku::item_type> oprf_receiver(std::vector<kuku::item_type> in,coproto::AsioSocket SenderKKRTSocket){
+        std::vector<kuku::item_type> oprf_receiver(std::vector<kuku::item_type> in,oc::Socket SenderKKRTSocket){
                 APSU_LOG_INFO(__FILE__ << __LINE__);
 
             vector<oc::block> blocks;

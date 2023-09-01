@@ -31,6 +31,9 @@
 #include "apsu/seal_object.h"
 #include "apsu/permute/apsu_OSNSender.h"
 #include "apsu/permute/apsu_OSNReceiver.h"
+
+#include "apsu/peqt/OSNPEQT.h"
+
 // libOTe
 #include <cryptoTools/Network/Session.h>
 #include <cryptoTools/Network/Channel.h>
@@ -202,7 +205,7 @@ namespace apsu {
                 const std::vector<HashedItem> &items,
                 network::NetworkChannel &chl,
                 const std::vector<std::string> &origin_item,
-                coproto::AsioSocket SenderKKRTSocket);
+                oc::Socket SenderKKRTSocket);
 
             /**
             Creates and returns a parameter request that can be sent to the sender with the
@@ -210,24 +213,7 @@ namespace apsu {
             */
             static Request CreateParamsRequest();
 
-            /**
-            Creates and returns an oprf::OPRFReceiver object for the given items.
-            */
-            static oprf::OPRFReceiver CreateOPRFReceiver(const std::vector<Item> &items);
-
-            /**
-            Creates an OPRF request that can be sent to the sender with the Sender::SendRequest
-            function.
-            */
-            static Request CreateOPRFRequest(const oprf::OPRFReceiver &oprf_receiver);
-
-            /**
-            Extracts a vector of OPRF hashed items from an OPRFResponse and the corresponding
-            oprf::OPRFReceiver.
-            */
-            static std::pair<std::vector<HashedItem>, std::vector<LabelKey>> ExtractHashes(
-                const OPRFResponse &oprf_response, const oprf::OPRFReceiver &oprf_receiver);
-
+          
             /**
             Creates a Query object from a vector of OPRF hashed items. The query contains the query
             request that can be extracted with the Query::extract_request function and sent to the
@@ -236,7 +222,7 @@ namespace apsu {
             Sender::process_result_part function to sort the results in the correct order.
             */
             std::pair<Request, IndexTranslationTable> create_query(
-                const std::vector<HashedItem> &items,const std::vector<std::string> &origin_item,coproto::AsioSocket SenderKKRTSocket);
+                const std::vector<HashedItem> &items,const std::vector<std::string> &origin_item,oc::Socket SenderChl);
 
             /**
             Processes a ResultPart object and returns a vector of MatchRecords in the same order as

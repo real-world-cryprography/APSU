@@ -19,7 +19,7 @@
 #include "apsu/log.h"
 #include "apsu/psu_params.h"
 #include "apsu/util/utils.h"
-#include "common/base_clp.h"
+#include "base_clp.h"
 
 using namespace std;
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)

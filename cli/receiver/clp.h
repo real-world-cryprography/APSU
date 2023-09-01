@@ -11,7 +11,7 @@
 
 // APSU
 #include "apsu/util/utils.h"
-#include "common/base_clp.h"
+#include "base_clp.h"
 
 // SEAL
 #include "seal/modulus.h"
