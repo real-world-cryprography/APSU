@@ -54,7 +54,7 @@ git clone https://github.com/lqvir/APSU.git
 cd APSU
 mkdir build
 cd build
-cmake .. -DLIBOUT_PATH=/your/path
+cmake .. -DLIBOTE_PATH=/your/path
 cmake --build . 
 
 ```
