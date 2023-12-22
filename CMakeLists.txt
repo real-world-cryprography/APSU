@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 3.13)
 # overriding our default of "Release".
 
 
-set(CMAKE_TOOLCHAIN_FILE "/home/yuyu/liuqi/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
