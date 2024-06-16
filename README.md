@@ -34,15 +34,18 @@ First follow this [Quick Start on Unix](https://github.com/microsoft/vcpkg#quick
 To build your CMake project with dependency on APSU, follow [this guide](https://github.com/microsoft/vcpkg#using-vcpkg-with-cmake).
 
 ### libOTe
-[libOTe](https://github.com/osu-crypto/libOTe) is a  fast and portable C++17 library for Oblivious Transfer extension (OTe). We can build it by following commands. Note that zmq has some conflict with libsodium, so we should disable libsodium and replace it with librelic. You can refer README.md of libOTe for details.
+[libOTe](https://github.com/osu-crypto/libOTe) is a  fast and portable C++17 library for Oblivious Transfer extension (OTe). We can build it by following commands.
 ```
 git clone --recursive https://github.com/osu-crypto/libOTe.git
 cd libOTe
 python build.py --setup --all --boost --relic
 python build.py -DENABLE_SODIUM=OFF -DENABLE_MRR_TWIST=OFF -DENABLE_RELIC=ON --install=/your/path/libOTe
 ```
-We recommend that you install `libOTe` in the folder `thirdparty\`. If not, please make sure the following arguments are passed to CMake configuration:
-- `-DLIBOTE_PATH=/your/path/libOTe`
+
+#### Notes 
+1. LibOTE Releases 2.2.0 removed support of C++ 17, 14, so we recommand to use the old version, e.g. Releases 2.1.0 and earlier.
+2. `libzmq` has some conflict with libsodium. Please disable libsodium and replace it with librelic. You can refer README.md of libOTe for details. 
+3. Default install folder of  `libOTe` is `thirdparty/`. You can change this setting and pass the following arguments to CMake when configure: `-DLIBOTE_PATH=/your/path/libOTe`
 
 
 ### Kunlun
@@ -50,7 +53,7 @@ We recommend that you install `libOTe` in the folder `thirdparty\`. If not, plea
 ### APSU
 When you have all dependencies ready, you can build APSU by the following commands. 
 ```
-git clone https://github.com/lqvir/APSU.git
+git clone https://github.com/real-world-cryprography/APSU.git
 cd APSU
 mkdir build
 cd build

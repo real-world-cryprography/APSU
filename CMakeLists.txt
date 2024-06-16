@@ -207,7 +207,7 @@ endif()
 # libOTe build     #
 ####################
 if(NOT LIBOTE_PATH)
-    set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/nosod")
+    set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/thirdparty")
 endif()
 message(STATUS "LIBOTE_PATH :${LIBOTE_PATH}")
 find_package(libOTe REQUIRED HINTS "${LIBOTE_PATH}" )
