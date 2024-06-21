@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 3.13)
 # overriding our default of "Release".
 
 
-set(CMAKE_TOOLCHAIN_FILE "/home/yuyu/liuqi/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -207,7 +207,7 @@ endif()
 # libOTe build     #
 ####################
 if(NOT LIBOTE_PATH)
-    set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/nosod")
+    set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/thirdparty")
 endif()
 message(STATUS "LIBOTE_PATH :${LIBOTE_PATH}")
 find_package(libOTe REQUIRED HINTS "${LIBOTE_PATH}" )
